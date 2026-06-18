@@ -1,4 +1,0 @@
-- [x] Update `src/index.css` to use `src/assets/background.jpg` as the global page background (cover, fixed, centered) and add base glassmorphism styling (blur + translucent borders/shadows) for surfaces.
-- [x] Update `src/App.css` to redesign all key UI panels as glass cards (stat cards, form/filters/list panels, job cards) and modernize typography/button/input styling.
-- [ ] Verify layout remains functional with existing component classNames (no JSX changes).
-- [ ] Run the app locally and visually confirm glass effect in both light/dark modes and that background image loads correctly.
