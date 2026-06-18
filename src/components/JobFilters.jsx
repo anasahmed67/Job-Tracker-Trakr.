@@ -1,0 +1,100 @@
+import { Search, LayoutGrid, List } from 'lucide-react';
+
+const FILTER_CATEGORIES = [
+  { id: 'All', label: 'All Statuses', color: 'var(--primary)', glow: 'rgba(99, 102, 241, 0.25)' },
+  { id: 'Applied', label: 'Applied', color: 'var(--color-applied)', glow: 'rgba(168, 85, 247, 0.25)' },
+  { id: 'Interview', label: 'Interviews', color: 'var(--color-interview)', glow: 'rgba(6, 182, 212, 0.25)' },
+  { id: 'Offer', label: 'Offers', color: 'var(--color-offer)', glow: 'rgba(16, 185, 129, 0.25)' },
+  { id: 'Rejected', label: 'Rejected', color: 'var(--color-rejected)', glow: 'rgba(244, 63, 94, 0.25)' },
+];
+
+export default function JobFilters({
+  searchQuery,
+  setSearchQuery,
+  statusFilter,
+  setStatusFilter,
+  viewMode,
+  setViewMode,
+  jobs = []
+}) {
+  // Calculate counts dynamically for the pills
+  const counts = {
+    All: jobs.length,
+    Applied: 0,
+    Interview: 0,
+    Offer: 0,
+    Rejected: 0,
+  };
+
+  for (const job of jobs) {
+    counts.All = jobs.length;
+    if (counts[job.status] !== undefined) {
+      counts[job.status] += 1;
+    }
+  }
+
+  return (
+    <section className="controls-row animated-fade" aria-label="Dashboard controls">
+      <div className="search-filter-group">
+        {/* Search Input */}
+        <div className="search-input-wrapper">
+          <Search size={16} className="search-icon" />
+          <input
+            id="search"
+            type="text"
+            className="search-input"
+            value={searchQuery}
+            placeholder="Search company or role..."
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
+
+        {/* Status Pills */}
+        <div className="status-pills">
+          {FILTER_CATEGORIES.map((cat) => {
+            const isActive = statusFilter === cat.id;
+            const count = counts[cat.id] || 0;
+
+            return (
+              <button
+                key={cat.id}
+                type="button"
+                className={`pill-btn ${isActive ? 'active' : ''}`}
+                onClick={() => setStatusFilter(cat.id)}
+                style={{
+                  '--active-pill-bg': cat.color,
+                  '--active-pill-glow': cat.glow,
+                }}
+              >
+                <span>{cat.id === 'All' ? 'All' : cat.label}</span>
+                <span className="pill-count">{count}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* View Mode Toggle (Board vs List) */}
+      <div className="view-mode-selector">
+        <button
+          type="button"
+          className={`toggle-view-btn ${viewMode === 'board' ? 'active' : ''}`}
+          onClick={() => setViewMode('board')}
+          title="Board View"
+        >
+          <LayoutGrid size={15} />
+          <span>Board</span>
+        </button>
+        <button
+          type="button"
+          className={`toggle-view-btn ${viewMode === 'list' ? 'active' : ''}`}
+          onClick={() => setViewMode('list')}
+          title="List View"
+        >
+          <List size={15} />
+          <span>List</span>
+        </button>
+      </div>
+    </section>
+  );
+}
