@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { X, Briefcase, Calendar, DollarSign, Link, MapPin, AlignLeft, User2, Save, Plus } from 'lucide-react';
 
+// The statuses the form allows user to pick from.
 const STATUSES = ['Applied', 'Interview', 'Rejected', 'Offer'];
 
+// Returns today's date in YYYY-MM-DD format (works nicely with <input type="date" />).
 function getTodayYYYYMMDD() {
   const d = new Date();
   const yyyy = d.getFullYear();
@@ -11,12 +13,16 @@ function getTodayYYYYMMDD() {
   return `${yyyy}-${mm}-${dd}`;
 }
 
+// Ensures we keep date strings compatible with the browser's date input format.
 function jobDateToYYYYMMDD(dateStr) {
   if (!dateStr) return '';
   if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return dateStr;
   return dateStr;
 }
 
+// Builds the initial state object for the form.
+// - If initialJob is missing => we are "adding" a new application.
+// - If initialJob exists => we are "editing" that application.
 function getInitialFormState(initialJob) {
   if (!initialJob) {
     return {
@@ -44,9 +50,14 @@ function getInitialFormState(initialJob) {
 }
 
 export default function JobForm({ isOpen, initialJob, onSubmit, onCancel }) {
+  // mode is used to switch wording/buttons: add vs edit.
   const mode = initialJob ? 'edit' : 'add';
+
+  // initialState provides the starting values for each form field.
   const initialState = getInitialFormState(initialJob);
 
+  // Each form field is "controlled" using React state.
+  // Changing the input updates the state variables below.
   const [company, setCompany] = useState(initialState.company);
   const [role, setRole] = useState(initialState.role);
   const [status, setStatus] = useState(initialState.status);
@@ -56,12 +67,13 @@ export default function JobForm({ isOpen, initialJob, onSubmit, onCancel }) {
   const [salary, setSalary] = useState(initialState.salary);
   const [url, setUrl] = useState(initialState.url);
 
+  // title changes based on mode (edit vs add).
   const title = useMemo(
     () => (mode === 'edit' ? 'Edit Application' : 'Track New Application'),
     [mode]
   );
 
-  // Support pressing escape to close modal
+  // Support pressing Escape to close the modal.
   useEffect(() => {
     function handleKeyDown(e) {
       if (e.key === 'Escape' && isOpen) {
@@ -72,6 +84,7 @@ export default function JobForm({ isOpen, initialJob, onSubmit, onCancel }) {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onCancel]);
 
+  // Collect values from controlled inputs and send them to the parent.
   function handleSubmit(e) {
     e.preventDefault();
 
@@ -86,15 +99,20 @@ export default function JobForm({ isOpen, initialJob, onSubmit, onCancel }) {
       url: url.trim(),
     };
 
+    // Basic validation: company/role are required.
     if (!payload.company || !payload.role) return;
 
+    // Pass payload up to App.jsx.
     onSubmit(payload);
   }
 
+  // If the modal isn't open, render nothing.
   if (!isOpen) return null;
 
   return (
+    // Clicking outside the modal (on overlay) cancels/close.
     <div className="modal-overlay" onClick={onCancel}>
+      {/* stopPropagation prevents clicks inside the modal from closing it. */}
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <h2>{title}</h2>
@@ -247,6 +265,7 @@ export default function JobForm({ isOpen, initialJob, onSubmit, onCancel }) {
               <button type="button" className="btn btn-secondary" onClick={onCancel}>
                 Cancel
               </button>
+
               <button type="submit" className="btn btn-primary">
                 {mode === 'edit' ? <Save size={16} /> : <Plus size={16} />}
                 {mode === 'edit' ? 'Save Changes' : 'Track Application'}
@@ -259,7 +278,7 @@ export default function JobForm({ isOpen, initialJob, onSubmit, onCancel }) {
   );
 }
 
-// Inline helper component for select icon status match
+// Inline helper component: shows a small status icon for the select dropdown.
 function ActivityIcon({ status }) {
   const size = 16;
   switch (status) {
@@ -271,6 +290,7 @@ function ActivityIcon({ status }) {
   }
 }
 
+// AwardIcon is a small custom SVG used when status === 'Offer'.
 function AwardIcon({ size }) {
   return (
     <svg

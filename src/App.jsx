@@ -13,36 +13,83 @@ import JobForm from './components/JobForm';
 import JobBoard from './components/JobBoard';
 import JobList from './components/JobList';
 
+// Allowed job "pipeline" statuses in this app.
+// Job cards/board can only switch to one of these values.
 const STATUSES = ['Applied', 'Interview', 'Rejected', 'Offer'];
 
+/**
+ * normalizeText is used by the search logic.
+ * It turns any input into a lowercase trimmed string so searches are forgiving.
+ */
 function normalizeText(s) {
   return String(s ?? '').toLowerCase().trim();
 }
 
 export default function App() {
+  /**
+   * jobs is the single source of truth for the whole app.
+   * - It starts by loading saved jobs from localStorage (loadJobs()).
+   * - Any add/edit/delete/status-change updates this array.
+   */
   const [jobs, setJobs] = useState(() => loadJobs());
+
+  // searchQuery is the text typed into the search box.
   const [searchQuery, setSearchQuery] = useState('');
+
+  // statusFilter filters jobs shown on screen (either a specific status or 'All').
   const [statusFilter, setStatusFilter] = useState('All');
+
+  // viewMode decides whether we render the board (columns) or list (table) view.
   const [viewMode, setViewMode] = useState('board');
+
+  // isFormOpen controls whether the JobForm modal is visible.
   const [isFormOpen, setIsFormOpen] = useState(false);
+
+  // editingId tells us which job is being edited (null means "adding a new job").
   const [editingId, setEditingId] = useState(null);
+
+  // sidebarSection tracks which sidebar item is currently selected for highlighting.
   const [sidebarSection, setSidebarSection] = useState('pipeline');
+
+  // isSidebarOpen controls the mobile sidebar off-canvas visibility.
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
+  // Persist jobs to localStorage whenever jobs change.
   useEffect(() => { saveJobs(jobs); }, [jobs]);
 
+  // Helper to close the sidebar (used by navigation clicks & overlay click).
   const closeSidebar = useCallback(() => setIsSidebarOpen(false), []);
 
+  /**
+   * editingJob is the full job object we pass into <JobForm /> when editing.
+   * - If editingId is null, editingJob becomes null.
+   * - When editingId matches a job.id, we select that job from the jobs array.
+   */
   const editingJob = useMemo(
     () => jobs.find((j) => j.id === editingId) ?? null,
     [jobs, editingId]
   );
 
+  /**
+   * filteredJobs is derived from:
+   * - jobs (the full dataset)
+   * - searchQuery (text filter)
+   * - statusFilter (status filter)
+   *
+   * Data flow:
+   * user types/searches/chooses a filter -> App state updates ->
+   * filteredJobs recomputes -> UI components re-render with the smaller list.
+   */
   const filteredJobs = useMemo(() => {
     const q = normalizeText(searchQuery);
     return jobs.filter((job) => {
+      // If the user selected a specific status, hide jobs that don't match it.
       if (statusFilter !== 'All' && job.status !== statusFilter) return false;
+
+      // If the user isn't searching anything, keep all jobs that pass status filter.
       if (!q) return true;
+
+      // Otherwise, check if the search query appears in any searchable field.
       return (
         normalizeText(job.company).includes(q) ||
         normalizeText(job.role).includes(q) ||
@@ -53,12 +100,24 @@ export default function App() {
     });
   }, [jobs, searchQuery, statusFilter]);
 
+  /**
+   * counts is used for badges and the header summary.
+   * It is calculated from the full jobs array (not filteredJobs) so it reflects total data.
+   */
   const counts = useMemo(() => {
     const c = { All: jobs.length, Applied: 0, Interview: 0, Rejected: 0, Offer: 0 };
     for (const j of jobs) if (c[j.status] !== undefined) c[j.status]++;
     return c;
   }, [jobs]);
 
+  /**
+   * handleAddOrUpdate receives a "payload" from <JobForm /> and updates App state.
+   * - If editingJob exists, we update the matching job in the jobs array.
+   * - Otherwise, we create a brand new job with a new id (createId()).
+   *
+   * IMPORTANT: We only transform/clean fields (trim, defaults) here.
+   * The actual UI behavior (open/close modal, job added/updated) remains the same.
+   */
   function handleAddOrUpdate(payload) {
     const sanitized = {
       company: payload.company?.trim() ?? '',
@@ -70,25 +129,44 @@ export default function App() {
       salary: payload.salary?.trim() ?? '',
       url: payload.url?.trim() ?? '',
     };
+
     if (editingJob) {
+      // Replace only the job being edited.
       setJobs((prev) => prev.map((j) => (j.id === editingJob.id ? { ...j, ...sanitized } : j)));
       setEditingId(null);
     } else {
+      // Create a new job entry.
       setJobs((prev) => [...prev, { id: createId(), ...sanitized }]);
     }
+
+    // Close the modal after updating.
     setIsFormOpen(false);
   }
 
+  // Delete flow:
+  // - Find the job (so we can show a friendly confirm message).
+  // - Confirm with the user.
+  // - Remove it from jobs.
+  // - If it was currently being edited, close the modal.
   function handleDelete(id) {
     const job = jobs.find((j) => j.id === id);
     if (!job) return;
     if (!window.confirm(`Delete ${job.company} — ${job.role}? This cannot be undone.`)) return;
+
     setJobs((prev) => prev.filter((j) => j.id !== id));
+
     if (editingId === id) { setEditingId(null); setIsFormOpen(false); }
   }
 
+  // Start editing: remember which job id we want, then open the modal.
   function handleEdit(id) { setEditingId(id); setIsFormOpen(true); }
+
+  // Cancel closes the modal and clears editingId (goes back to "add" mode).
   function handleCancelForm() { setEditingId(null); setIsFormOpen(false); }
+
+  // Status change flow (used by drag/drop in JobBoard):
+  // - validate newStatus
+  // - update only the job that matches id
   function handleStatusChange(id, newStatus) {
     if (!STATUSES.includes(newStatus)) return;
     setJobs((prev) => prev.map((j) => (j.id === id ? { ...j, status: newStatus } : j)));
