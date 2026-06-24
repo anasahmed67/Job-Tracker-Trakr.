@@ -259,6 +259,20 @@
   padding-bottom: 12px;
 }
 
+/* Mobile: make status tabs horizontally scrollable */
+@media (max-width: 640px) {
+  .filter-tabs {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: 10px;
+  }
+  .filter-tabs::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+
 .filter-tab {
   display: flex;
   align-items: center;
@@ -899,4 +913,235 @@
 .app-empty-state {
   text-align: center;
   padding: 64px 24px;
+}
+
+/* ──────────────────────────────────────────────
+   Mobile / Responsive
+────────────────────────────────────────────── */
+
+/* Overlay/off-canvas sidebar (mobile) */
+.sidebar-overlay {
+  display: none;
+}
+
+.topbar-hamburger {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  :root {
+    --sidebar-w: 200px;
+    --topbar-h: 56px;
+  }
+
+  /* Shell: avoid viewport overflow issues on mobile browsers */
+  .app-shell {
+    height: auto;
+    min-height: 100vh;
+    overflow: visible;
+  }
+
+  /* Topbar: reduce padding + allow wrapping (prevents button overlap) */
+  .topbar {
+    padding: 8px 12px;
+    height: auto;
+    min-height: unset;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .topbar-search-wrapper {
+    width: 100%;
+    flex: 1 1 100%;
+    min-width: 0;
+    order: 2;
+    padding: 6px 12px;
+    gap: 10px;
+  }
+
+  .topbar-actions {
+    order: 3;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 10px;
+  }
+
+  /* Ensure primary action stays at the far right on mobile */
+  .topbar-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .btn-add {
+    margin-left: auto;
+  }
+
+  .content-area {
+    padding: 20px 16px;
+  }
+
+  /* Stats and insights stacking */
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .insights-row {
+    grid-template-columns: 1fr;
+  }
+
+  /* Board: single column stacking for readability */
+  .board-wrapper {
+    grid-template-columns: 1fr;
+  }
+
+  .board-column {
+    min-height: auto;
+  }
+
+  /* List: switch from table-grid rows to stacked cards */
+  .list-table-header {
+    display: none;
+  }
+
+  .list-item-row {
+    grid-template-columns: 1fr !important;
+    padding: 14px 16px;
+    gap: 10px;
+    align-items: flex-start;
+    border-bottom: 1px solid var(--border);
+    border-radius: 0;
+  }
+
+  .list-item-company-cell {
+    flex-wrap: wrap;
+  }
+
+  .list-item-actions-cell {
+    justify-content: flex-start;
+  }
+}
+
+/* Smaller phones */
+@media (max-width: 640px) {
+  /* Enable mobile off-canvas sidebar */
+  .sidebar-desktop {
+    display: none;
+  }
+
+  .topbar-hamburger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text-2);
+    transition: transform 0.2s, background 0.2s;
+  }
+
+  .topbar-hamburger:hover {
+    background: var(--surface-2);
+    transform: translateY(-1px);
+  }
+
+  /* Off-canvas overlay + panel */
+  .sidebar-overlay {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    background: rgba(0, 0, 0, 0.35);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+  }
+
+  .sidebar-overlay.open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .sidebar-mobile {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: min(90vw, var(--sidebar-w));
+    transform: translateX(-100%);
+    transition: transform 0.25s ease;
+    overflow-y: auto;
+    padding-bottom: 24px;
+  }
+
+  .sidebar-mobile.open {
+    transform: translateX(0);
+  }
+
+  /* Reduce topbar controls */
+  .topbar {
+    gap: 12px;
+    justify-content: flex-start;
+  }
+
+  .topbar-actions {
+    gap: 10px;
+  }
+
+  .view-toggle-btn {
+    padding: 6px 12px;
+  }
+
+  /* Make view toggle stack nicely */
+  .topbar-actions {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  /* Content */
+  .page-title {
+    font-size: 1.5rem;
+  }
+
+  /* Stats grid -> single column */
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* Board: still stacked columns */
+  .board-wrapper {
+    gap: 12px;
+  }
+
+  /* Board cards spacing */
+  .board-column {
+    padding: 10px;
+  }
+
+  /* List wrapper padding adjustments */
+  .list-wrapper {
+    border-radius: var(--r-md);
+  }
+
+  /* Modal: make comfortable on small screens */
+  .modal-content {
+    max-width: 92vw;
+    border-radius: var(--r-md);
+  }
+
+  .modal-header {
+    padding: 16px 16px;
+  }
+
+  .modal-body {
+    padding: 16px;
+  }
+
+  .form-row-2 {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
 }

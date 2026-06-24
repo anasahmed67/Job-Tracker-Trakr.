@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
 import {
   Briefcase, Plus, Search, LayoutGrid, List,
-  Star, Clock, Target, BarChart2, FolderOpen, Settings, ChevronDown
+  Star, Clock, Target, Settings, ChevronDown, Menu
 } from 'lucide-react';
 import './App.css';
 
@@ -27,8 +27,11 @@ export default function App() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [sidebarSection, setSidebarSection] = useState('pipeline');
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   useEffect(() => { saveJobs(jobs); }, [jobs]);
+
+  const closeSidebar = useCallback(() => setIsSidebarOpen(false), []);
 
   const editingJob = useMemo(
     () => jobs.find((j) => j.id === editingId) ?? null,
@@ -98,82 +101,119 @@ export default function App() {
     { id: 'recent', label: 'Recent', icon: <Clock size={15} /> },
   ];
 
+  const SidebarContent = (
+    <>
+      {/* Brand */}
+      <div className="sidebar-brand">
+        <div className="brand-icon">
+          <Briefcase size={18} strokeWidth={2.5} />
+        </div>
+        <span className="brand-name">Trackr.</span>
+        <ChevronDown size={14} className="brand-chevron" />
+      </div>
+
+      {/* Quick nav */}
+      <nav className="sidebar-nav">
+        <div className="sidebar-section-label">Workspace</div>
+        {sideNavItems.map((item) => (
+          <button
+            key={item.id}
+            className={`sidebar-nav-item ${sidebarSection === item.id ? 'active' : ''}`}
+            onClick={() => {
+              setSidebarSection(item.id);
+              if (item.id === 'interviews') setStatusFilter('Interview');
+              else if (item.id === 'offers') setStatusFilter('Offer');
+              else setStatusFilter('All');
+              closeSidebar();
+            }}
+          >
+            <span className="sidebar-nav-icon">{item.icon}</span>
+            <span>{item.label}</span>
+            {item.count !== undefined && item.count > 0 && (
+              <span className="sidebar-nav-badge">{item.count}</span>
+            )}
+          </button>
+        ))}
+      </nav>
+
+      {/* Status breakdown */}
+      <div className="sidebar-divider" />
+      <div className="sidebar-section-label">By Status</div>
+      <nav className="sidebar-nav">
+        {[
+          { id: 'Applied', color: 'var(--color-applied)' },
+          { id: 'Interview', color: 'var(--color-interview)' },
+          { id: 'Offer', color: 'var(--color-offer)' },
+          { id: 'Rejected', color: 'var(--color-rejected)' },
+        ].map((s) => (
+          <button
+            key={s.id}
+            className={`sidebar-nav-item ${statusFilter === s.id && sidebarSection === 'pipeline' ? 'active' : ''}`}
+            onClick={() => {
+              setStatusFilter(s.id);
+              setSidebarSection('pipeline');
+              closeSidebar();
+            }}
+          >
+            <span className="sidebar-status-dot" style={{ background: s.color }} />
+            <span>{s.id}</span>
+            <span className="sidebar-nav-badge" style={{ color: s.color, background: 'transparent' }}>
+              {counts[s.id]}
+            </span>
+          </button>
+        ))}
+      </nav>
+
+      {/* Bottom */}
+      <div className="sidebar-bottom">
+        <div className="sidebar-divider" />
+        <button className="sidebar-nav-item" onClick={closeSidebar}>
+          <span className="sidebar-nav-icon"><Settings size={15} /></span>
+          <span>Settings</span>
+        </button>
+      </div>
+    </>
+  );
+
   return (
     <div className="app-shell">
 
-      {/* ── Sidebar ── */}
-      <aside className="sidebar">
-        {/* Brand */}
-        <div className="sidebar-brand">
-          <div className="brand-icon">
-            <Briefcase size={18} strokeWidth={2.5} />
-          </div>
-          <span className="brand-name">Trackr.</span>
-          <ChevronDown size={14} className="brand-chevron" />
-        </div>
-
-        {/* Quick nav */}
-        <nav className="sidebar-nav">
-          <div className="sidebar-section-label">Workspace</div>
-          {sideNavItems.map((item) => (
-            <button
-              key={item.id}
-              className={`sidebar-nav-item ${sidebarSection === item.id ? 'active' : ''}`}
-              onClick={() => {
-                setSidebarSection(item.id);
-                if (item.id === 'interviews') setStatusFilter('Interview');
-                else if (item.id === 'offers') setStatusFilter('Offer');
-                else setStatusFilter('All');
-              }}
-            >
-              <span className="sidebar-nav-icon">{item.icon}</span>
-              <span>{item.label}</span>
-              {item.count !== undefined && item.count > 0 && (
-                <span className="sidebar-nav-badge">{item.count}</span>
-              )}
-            </button>
-          ))}
-        </nav>
-
-        {/* Status breakdown */}
-        <div className="sidebar-divider" />
-        <div className="sidebar-section-label">By Status</div>
-        <nav className="sidebar-nav">
-          {[
-            { id: 'Applied', color: 'var(--color-applied)' },
-            { id: 'Interview', color: 'var(--color-interview)' },
-            { id: 'Offer', color: 'var(--color-offer)' },
-            { id: 'Rejected', color: 'var(--color-rejected)' },
-          ].map((s) => (
-            <button
-              key={s.id}
-              className={`sidebar-nav-item ${statusFilter === s.id && sidebarSection === 'pipeline' ? 'active' : ''}`}
-              onClick={() => { setStatusFilter(s.id); setSidebarSection('pipeline'); }}
-            >
-              <span className="sidebar-status-dot" style={{ background: s.color }} />
-              <span>{s.id}</span>
-              <span className="sidebar-nav-badge" style={{ color: s.color, background: 'transparent' }}>
-                {counts[s.id]}
-              </span>
-            </button>
-          ))}
-        </nav>
-
-        {/* Bottom */}
-        <div className="sidebar-bottom">
-          <div className="sidebar-divider" />
-          <button className="sidebar-nav-item">
-            <span className="sidebar-nav-icon"><Settings size={15} /></span>
-            <span>Settings</span>
-          </button>
-        </div>
+      {/* ── Sidebar (desktop) ── */}
+      <aside className="sidebar sidebar-desktop">
+        {SidebarContent}
       </aside>
+
+      {/* ── Sidebar (mobile off-canvas) ── */}
+      <div
+        className={`sidebar-overlay ${isSidebarOpen ? 'open' : ''}`}
+        onClick={closeSidebar}
+        role="presentation"
+      >
+        <aside
+          className={`sidebar sidebar-mobile ${isSidebarOpen ? 'open' : ''}`}
+          onClick={(e) => e.stopPropagation()}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Navigation"
+        >
+          {SidebarContent}
+        </aside>
+      </div>
 
       {/* ── Main panel ── */}
       <div className="main-panel">
 
         {/* Top bar */}
         <header className="topbar">
+          <button
+            type="button"
+            className="topbar-hamburger"
+            aria-label="Open navigation"
+            onClick={() => setIsSidebarOpen(true)}
+          >
+            <Menu size={18} />
+          </button>
+
           <div className="topbar-search-wrapper">
             <Search size={15} className="topbar-search-icon" />
             <input
